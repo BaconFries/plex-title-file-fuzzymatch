@@ -1,24 +1,16 @@
 #!/usr/bin/env python
-import urllib2
-import xmltodict
-import dumper
+import plexapi
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
+from plexapi.server import PlexServer
 
-#curl 127.0.0.1:32400/library/sections/
-section = '2'
-requestURL = 'http://192.168.1.2:32400/library/sections/' + section + '/all'
-data = xmltodict.parse(urllib2.urlopen(requestURL))
-for a in data["MediaContainer"].get("Video"):
-	title = a.get("@title")
-	if not isinstance(a["Media"], dict):
-		for b in a["Media"]:
-			file = b["Part"]["@file"]
-			score = fuzz.token_set_ratio( title, file ) 
-			if score < 94:
-				print "score: " + str(score) + " title: " + title + "\tfile: " + file
-	else:
-		file = a["Media"]["Part"]["@file"]
-		score = fuzz.token_set_ratio( title, file ) 
-		if score < 94:
-			print "score: " + str(score) + " title: " + title + "\tfile: " + file
+baseurl = 'http://127.0.0.1:32400'
+token   = ''
+plex    = PlexServer(baseurl, token)
+movies  = plex.library.section('HD Movies').all( )
+
+for movie in movies:
+  for part in movie.iterParts():
+    score = fuzz.token_set_ratio( movie.title, part.file )
+    if score < 94:
+      print "score: " + str(score) + " title: " + movie.title + "\tfile: " + part.file
